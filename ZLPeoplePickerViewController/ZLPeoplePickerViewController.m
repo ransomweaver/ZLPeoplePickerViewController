@@ -36,6 +36,9 @@
     self = [super init];
     if (self) {
         [self setup];
+
+        // Default YES
+        self.showAddButton = YES;
     }
     return self;
 }
@@ -88,10 +91,15 @@
     // self.clearsSelectionOnViewWillAppear = NO;
 
     self.navigationItem.title = @"Contacts";
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]
-        initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
-                             target:self
-                             action:@selector(showNewPersonViewController)];
+    if (self.title.length) {
+        self.navigationItem.title = self.title;
+    }
+    if (_showAddButton) {
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]
+                initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
+                                     target:self
+                                     action:@selector(showNewPersonViewController)];
+    }
 
     [self refreshControlAction:self.refreshControl];
 
@@ -162,6 +170,7 @@
 }
 
 - (void)addressBookDidChangeNotification:(NSNotification *)note {
+    //NSLog(@"didChangeNotification!");
     [self performSelector:@selector(reloadData) withObject:nil];
 }
 
@@ -170,28 +179,32 @@
 }
 
 - (void)reloadData:(void (^)(BOOL succeeded, NSError *error))completionBlock {
-    __weak __typeof(self) weakSelf = self;
-    if ([ZLAddressBook sharedInstance].contacts.count > 0) {
-        [weakSelf
-            setPartitionedContactsWithContacts:[ZLAddressBook sharedInstance]
-                                                   .contacts];
-        [weakSelf.tableView reloadData];
-    }
-    [[ZLAddressBook sharedInstance]
-        loadContacts:^(BOOL succeeded, NSError *error) {
-            if (!error) {
-                [weakSelf setPartitionedContactsWithContacts:
-                              [ZLAddressBook sharedInstance].contacts];
-                [weakSelf.tableView reloadData];
-                if (completionBlock) {
-                    completionBlock(YES, nil);
-                }
-            } else {
-                if (completionBlock) {
-                    completionBlock(NO, nil);
-                }
-            }
-        }];
+
+    //NSLog(@"start.");
+    __block NSArray *contacts = @[];
+
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+    [[ZLAddressBook sharedInstance] loadContactsInBackground:^(BOOL succeeded, NSError *error) {
+        if (!error) {
+            contacts = [ZLAddressBook sharedInstance].contacts;
+        }
+        if (completionBlock) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionBlock(succeeded, error);
+            });
+        }
+        //NSLog(@"complete.");
+        dispatch_semaphore_signal(semaphore);
+    }];
+
+    //NSLog(@"wait...");
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
+    [self setPartitionedContactsWithContacts:contacts];
+    [self.tableView reloadData];
+
+    //NSLog(@"finish.");
 }
 
 #pragma mark - UISearchBarDelegate
@@ -254,7 +267,17 @@
             (UISearchController *)searchController {
     // update the filtered array based on the search text
     NSString *searchText = searchController.searchBar.text;
-    NSMutableArray *searchResults = [[self.partitionedContacts
+
+    if (!searchText.length) {
+        ZLResultsTableViewController *tableController = self.resultsTableViewController;
+        tableController.filedMask = self.filedMask;
+        tableController.selectedPeople = self.selectedPeople;
+        [tableController setPartitionedContactsWithContacts:@[]];
+        [tableController.tableView reloadData];
+        return;
+    }
+
+    __block NSMutableArray *searchResults = [[self.partitionedContacts
         valueForKeyPath:@"@unionOfArrays.self"] mutableCopy];
 
     // strip out all the leading and trailing spaces
@@ -318,6 +341,28 @@
         //            [searchItemsPredicate addObject:predicate];
         //        }
 
+        // company
+        predicate = [NSPredicate predicateWithFormat:@"SELF.company CONTAINS[c] %@", searchString];
+        [searchItemsPredicate addObject:predicate];
+        // note
+        predicate = [NSPredicate predicateWithFormat:@"SELF.note CONTAINS[c] %@", searchString];
+        [searchItemsPredicate addObject:predicate];
+        // phone
+        NSNumberFormatter *numFormatter = [[NSNumberFormatter alloc] init];
+        [numFormatter setNumberStyle:NSNumberFormatterNoStyle];
+        NSNumber *targetNumber = [numFormatter
+                numberFromString:searchString];
+        if (targetNumber != nil) {   // searchString may not convert to a number
+            predicate = [NSPredicate predicateWithFormat:@"ANY SELF.phones CONTAINS[c] %@", searchString];
+            [searchItemsPredicate addObject:predicate];
+        }
+        // firstNamePhonetic
+        predicate = [NSPredicate predicateWithFormat:@"SELF.firstNamePhonetic CONTAINS[c] %@", searchString];
+        [searchItemsPredicate addObject:predicate];
+        // lastNamePhonetic
+        predicate = [NSPredicate predicateWithFormat:@"SELF.lastNamePhonetic CONTAINS[c] %@", searchString];
+        [searchItemsPredicate addObject:predicate];
+
         // at this OR predicate to our master AND predicate
         NSCompoundPredicate *orMatchPredicates =
             (NSCompoundPredicate *)[NSCompoundPredicate
@@ -325,7 +370,7 @@
         [andMatchPredicates addObject:orMatchPredicates];
     }
 
-    NSCompoundPredicate *finalCompoundPredicate = nil;
+    __block NSCompoundPredicate *finalCompoundPredicate = nil;
 
     // match up the fields of the Product object
     finalCompoundPredicate = (NSCompoundPredicate *)
@@ -335,13 +380,19 @@
         filteredArrayUsingPredicate:finalCompoundPredicate] mutableCopy];
 
     // hand over the filtered results to our search results table
-    ZLResultsTableViewController *tableController =
-        (ZLResultsTableViewController *)
-            self.searchController.searchResultsController;
-    tableController.filedMask = self.filedMask;
-    tableController.selectedPeople = self.selectedPeople;
-    [tableController setPartitionedContactsWithContacts:searchResults];
-    [tableController.tableView reloadData];
+    __weak typeof (self) weakSelf = self;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
+        searchResults = [[searchResults filteredArrayUsingPredicate:finalCompoundPredicate] mutableCopy];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            ZLResultsTableViewController *tableController = weakSelf.resultsTableViewController;
+            tableController.filedMask = weakSelf.filedMask;
+            tableController.selectedPeople = weakSelf.selectedPeople;
+            [tableController setPartitionedContactsWithContacts:searchResults];
+            [tableController.tableView reloadData];
+        });
+    });
 }
 
 #pragma mark - ABAdressBookUI
@@ -367,6 +418,10 @@
          respondsToSelector:@selector(newPersonViewControllerDidCompleteWithNewPerson:)]) {
             [self.delegate newPersonViewControllerDidCompleteWithNewPerson:person];
          }
+
+    [[NSNotificationCenter defaultCenter]
+            postNotificationName:ZLAddressBookDidChangeNotification
+                          object:nil];
 }
 
 #pragma mark - ()

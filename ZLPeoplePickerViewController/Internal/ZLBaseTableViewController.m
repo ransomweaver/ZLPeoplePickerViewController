@@ -11,6 +11,7 @@
 
 #import "APContact.h"
 #import "APContact+Sorting.h"
+#import "APContact+NamePhonetic.h"
 
 @implementation ZLBaseTableViewController
 
@@ -39,63 +40,31 @@
         }
 
         // add new contact
-        SEL selector = @selector(lastName);
+        SEL selector = @selector(lastNamePhonetic);
+        if (contact.lastNamePhonetic.length == 0) {
+            selector = @selector(lastName);
+        }
         if (contact.lastName.length == 0) {
+            selector = @selector(firstNamePhonetic);
+        }
+        if (contact.firstNamePhonetic.length == 0) {
+            selector = @selector(firstName);
+        }
+        if (contact.firstName.length == 0) {
             selector = @selector(compositeName);
         }
-        NSInteger index = [[LRIndexedCollationWithSearch currentCollation]
-                   sectionForObject:contact
-            collationStringSelector:selector];
+        NSInteger index = [[LRIndexedCollationWithSearch currentCollation] sectionForObject:contact
+                                                                    collationStringSelector:selector];
         // contact.sectionIndex = index;
         [self.partitionedContacts[index] addObject:contact];
     }
 
     // sort sections
-    NSUInteger sectionCount =
-        [[[LRIndexedCollationWithSearch currentCollation] sectionTitles] count];
-    int sectionCountInt =
-        [[NSNumber numberWithUnsignedInteger:sectionCount] intValue];
-    for (NSInteger i = 0; i < sectionCountInt; i++) {
-        NSArray *section = self.partitionedContacts[i];
-        NSArray *sortedSectionByLastName =
-            [[LRIndexedCollationWithSearch currentCollation]
-                   sortedArrayFromArray:section
-                collationStringSelector:@selector(lastNameOrCompositeName)];
-
-        NSMutableArray *sortedSection = [NSMutableArray array];
-        {
-            NSMutableArray *subSection = [NSMutableArray array];
-            NSString *currentLastName = [NSString string];
-            for (int i = 0; i < sortedSectionByLastName.count; i++) {
-                APContact *contact = (APContact *)sortedSectionByLastName[i];
-                NSString *lastName = [contact lastNameOrCompositeName];
-
-                if ([lastName isEqualToString:currentLastName]) {
-                    [subSection addObject:contact];
-                } else {
-                    if (subSection.count > 0) {
-                        NSArray *sortedSubSectionByFirstName =
-                            [[LRIndexedCollationWithSearch currentCollation]
-                                   sortedArrayFromArray:subSection
-                                collationStringSelector:
-                                    @selector(firstNameOrCompositeName)];
-                        [sortedSection
-                            addObjectsFromArray:sortedSubSectionByFirstName];
-                        [subSection removeAllObjects];
-                    }
-                    currentLastName = lastName;
-                    [subSection addObject:contact];
-                }
-            }
-
-            NSArray *sortedSubSectionByFirstName = [
-                [LRIndexedCollationWithSearch currentCollation]
-                   sortedArrayFromArray:subSection
-                collationStringSelector:@selector(firstNameOrCompositeName)];
-            [sortedSection addObjectsFromArray:sortedSubSectionByFirstName];
-        }
-
-        self.partitionedContacts[i] = sortedSection;
+    for (NSInteger i = 0; i < self.partitionedContacts.count; i++) {
+        NSArray *sorted = [self.partitionedContacts[i] sortedArrayWithOptions:NSSortStable usingComparator:^NSComparisonResult(id obj1, id obj2) {
+            return [[obj1 compositeName] compare:[obj2 compositeName] options:NSNumericSearch|NSForcedOrderingSearch];
+        }];
+        self.partitionedContacts[i] = sorted;
     }
 }
 

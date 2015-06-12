@@ -52,7 +52,17 @@ NSString *const ZLAddressBookDidChangeNotification =
     };
     [self.addressBook loadContacts:^(NSArray *contacts, NSError *error) {
         if (!error) {
-            weakSelf.contacts = contacts;
+            //weakSelf.contacts = contacts;
+
+            // ソート条件を定義
+            NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
+            NSSortDescriptor *lastNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastName" ascending:YES];
+            NSSortDescriptor *firstNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstName" ascending:YES];
+            NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
+            NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
+            NSArray *sorted = [contacts sortedArrayUsingDescriptors:@[nameSortDescriptor, lastNameSortDescriptor, firstNameSortDescriptor, lastNameOrCompositeNameSortDescriptor, firstNameOrCompositeNameSortDescriptor]];
+            weakSelf.contacts = sorted;
+
             if (completionBlock) {
                 completionBlock(YES, nil);
             }
@@ -67,6 +77,46 @@ NSString *const ZLAddressBookDidChangeNotification =
         [[NSNotificationCenter defaultCenter]
             postNotificationName:ZLAddressBookDidChangeNotification
                           object:nil];
+    }];
+}
+
+- (void)loadContactsInBackground:(void (^)(BOOL succeeded, NSError *error))completionBlock {
+    __weak __typeof(self) weakSelf = self;
+    self.addressBook.fieldsMask =
+            APContactFieldFirstName | APContactFieldLastName |
+                    APContactFieldCompositeName | APContactFieldPhones |
+                    APContactFieldThumbnail | APContactFieldRecordID |
+                    APContactFieldEmails | APContactFieldAddresses;
+    self.addressBook.filterBlock = ^BOOL(APContact *contact) {
+        return contact.compositeName != nil;
+    };
+    [self.addressBook loadContactsOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+                               completion:^(NSArray *contacts, NSError *error) {
+        if (!error) {
+            //weakSelf.contacts = contacts;
+
+            // ソート条件を定義
+            NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
+            NSSortDescriptor *lastNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastName" ascending:YES];
+            NSSortDescriptor *firstNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstName" ascending:YES];
+            NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
+            NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
+            NSArray *sorted = [contacts sortedArrayUsingDescriptors:@[nameSortDescriptor, lastNameSortDescriptor, firstNameSortDescriptor, lastNameOrCompositeNameSortDescriptor, firstNameOrCompositeNameSortDescriptor]];
+            weakSelf.contacts = sorted;
+
+            if (completionBlock) {
+                completionBlock(YES, nil);
+            }
+        } else {
+            if (completionBlock) {
+                completionBlock(NO, error);
+            }
+        }
+    }];
+    [self.addressBook startObserveChangesWithCallback:^{
+        [[NSNotificationCenter defaultCenter]
+                postNotificationName:ZLAddressBookDidChangeNotification
+                              object:nil];
     }];
 }
 

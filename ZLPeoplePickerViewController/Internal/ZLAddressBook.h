@@ -15,5 +15,6 @@ extern NSString *const ZLAddressBookDidChangeNotification;
 
 + (instancetype)sharedInstance;
 - (void)loadContacts:(void (^)(BOOL succeeded, NSError *error))completionBlock;
+- (void)loadContactsInBackground:(void (^)(BOOL succeeded, NSError *error))completionBlock;
 
 @end

@@ -1,4 +1,5 @@
 <img src="https://dl.dropboxusercontent.com/u/2334198/APAddressBook-git-teaser.png">
+[![Build Status](https://api.travis-ci.org/Alterplay/APAddressBook.svg)](https://travis-ci.org/Alterplay/APAddressBook)
 
 APAddressBook is a wrapper on [AddressBook.framework](https://developer.apple.com/library/ios/documentation/AddressBook/Reference/AddressBook_iPhoneOS_Framework/_index.html) that gives easy access to native address book without pain in a head.
 
@@ -49,11 +50,12 @@ Available fields:
 * APContactFieldThumbnail - *contact thumbnail*
 * APContactFieldCreationDate - *contact creation date*
 * APContactFieldModificationDate - *contact modification date*
-* APContactFieldPhonesWithLabels - *contact phones with labels*
+* APContactFieldPhonesWithLabels - *contact phones with original and localized labels*
 * APContactFieldCompositeName - *the concatenated value of prefix, suffix, organization, first name, and last name*
 * APContactFieldAddresses - *array of user addresses*
 * APContactFieldRecordID - *ID of record in iOS address book*
 * APContactFieldSocialProfiles - *array of social profiles*
+* APContactFieldNote - *contact notes*
 * APContactFieldDefault - *contact first name, last name and phones array*
 * APContactFieldAll - *all contact fields described above*
 
@@ -83,6 +85,11 @@ addressBook.sortDescriptors = @[
     [NSSortDescriptor sortDescriptorWithKey:@"firstName" ascending:YES],
     [NSSortDescriptor sortDescriptorWithKey:@"lastName" ascending:YES]
 ];
+```
+
+**Get contact by address book record ID**
+```objective-c
+APContact *contact = [addressBook getContactByRecordID:recordID];
 ```
 
 **Check address book access**
@@ -141,90 +148,11 @@ self.addressBook.loadContacts(
 
 #### History
 
-**Version 0.1.4**
-* Changed the definition of APAddressBookAccess to use NS_ENUM so that Swift knows how to convert APAddressBookAccess for bridging.
+[Releases](https://github.com/Alterplay/APAddressBook/releases)
 
-Thanks to [ndmeiri](https://github.com/ndmeiri) for pull request
+#### Contributor guide
 
-**Version 0.1.3**
-* Added the Core as a dependency of Swift subspec
-
-Thanks to [nicopuri](https://github.com/nicopuri) for pull request
-
-
-**Version 0.1.2**
-* Added contact social profile
-
-Thanks to [David Muzi](https://github.com/davidmuzi) for pull request
-
-**Version 0.1.1**
-* Added `Swift` podspec with bridging header
-* Added example application in [Swift](https://developer.apple.com/swift/)
-* Added contact's middle name
-
-Thanks to [Rubén González](https://github.com/rbngzlv) for pull request
-
-**Version 0.1.0**
-* Refactored address book external changes observing
-
-**Version 0.0.10**
-* Fixed intermittent crashing in requestAccessWithCompletion handler
-
-Thanks to [Daniel Ericsson](https://github.com/monowerker) for pull request.
-
-**Version 0.0.9**
-* Added observing of address book external changes
-
-Made by [Serg Krivoblotsky](https://github.com/Krivoblotsky)
-
-**Version 0.0.8**
-* Added contact record creation date
-* Added contact record modification date
-
-Thanks to [Natasha Murashev](https://github.com/NatashaTheRobot) for pull request.
-
-**Version 0.0.7**
-* Added contact's concatenated name
-
-Thanks to [Peter Robinett](https://github.com/pr1001) for pull request.
-
-* Added contact's addresses
-* Added contact's ID in iOS AddressBook
-
-Thanks to [Cory Alder](https://github.com/coryalder) for pull request.
-
-**Version 0.0.6**
-* Added loading contacts on custom dispatch queue
-
-Thanks to [Marcin Krzyzanowski](https://github.com/krzak) for pull request.
-
-**Version 0.0.5**
-* Fixed bad access of phone label parsing.
-* Fixed memory leak of peoples array.
-
-Thanks to [dong-seta](https://github.com/dong-seta) for found bug.
-
-**Version 0.0.4**
-* Added retrieving phone labels.
-
-Thanks to [John Hobbs](https://github.com/jmhobbs) for pull request.
-
-**Version 0.0.3**
-* Added loading contact thumbnail.
-
-Thanks to [Carlos Fonseca](https://github.com/carlosefonseca) for pull request.
-
-**Version 0.0.2**
-* Fixed potential crash on fetching contacts using non-property APAddressBook object.
-
-Thanks to [Evgen Bakumenko](https://github.com/evgenbakumenko) for pull request.
-
-**Version 0.0.1**
-* First release.
-
-#### Contributor's guide
-Please, send your pull request to the `develop` branch. Thank you!
-
+[Contributor Guide](https://github.com/Alterplay/APAddressBook/wiki/Contributor-Guide)
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/b3f8691205854e15dcfebe3fc2ed599e "githalytics.com")](http://githalytics.com/Alterplay/APAddressBook)
 

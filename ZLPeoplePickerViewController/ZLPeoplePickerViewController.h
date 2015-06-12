@@ -8,6 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import <AddressBook/AddressBook.h>
+#import "APContact.h"
+#import "APContact+Sorting.h"
+#import "APContact+NamePhonetic.h"
+#import "ZLAddressBook.h"
 #import "ZLBaseTableViewController.h"
 
 @class ZLPeoplePickerViewController;
@@ -55,4 +59,7 @@
                         "-initWithStyle is not allowed, use -init instead")));
 + (instancetype)presentPeoplePickerViewControllerForParentViewController:
         (UIViewController *)parentViewController;
+
+@property BOOL showAddButton;
+
 @end
