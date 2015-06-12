@@ -50,18 +50,23 @@ NSString *const ZLAddressBookDidChangeNotification =
     self.addressBook.filterBlock = ^BOOL(APContact *contact) {
         return contact.compositeName != nil;
     };
+    // ソート条件を定義
+    NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
+    NSSortDescriptor *lastNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastName" ascending:YES];
+    NSSortDescriptor *firstNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstName" ascending:YES];
+    NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
+    NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
+    self.addressBook.sortDescriptors = @[
+            nameSortDescriptor,
+            lastNameSortDescriptor,
+            firstNameSortDescriptor,
+            lastNameOrCompositeNameSortDescriptor,
+            firstNameOrCompositeNameSortDescriptor
+    ];
+
     [self.addressBook loadContacts:^(NSArray *contacts, NSError *error) {
         if (!error) {
-            //weakSelf.contacts = contacts;
-
-            // ソート条件を定義
-            NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
-            NSSortDescriptor *lastNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastName" ascending:YES];
-            NSSortDescriptor *firstNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstName" ascending:YES];
-            NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
-            NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
-            NSArray *sorted = [contacts sortedArrayUsingDescriptors:@[nameSortDescriptor, lastNameSortDescriptor, firstNameSortDescriptor, lastNameOrCompositeNameSortDescriptor, firstNameOrCompositeNameSortDescriptor]];
-            weakSelf.contacts = sorted;
+            weakSelf.contacts = contacts;
 
             if (completionBlock) {
                 completionBlock(YES, nil);
@@ -90,19 +95,24 @@ NSString *const ZLAddressBookDidChangeNotification =
     self.addressBook.filterBlock = ^BOOL(APContact *contact) {
         return contact.compositeName != nil;
     };
+    // ソート条件を定義
+    NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
+    NSSortDescriptor *lastNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastName" ascending:YES];
+    NSSortDescriptor *firstNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstName" ascending:YES];
+    NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
+    NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
+    self.addressBook.sortDescriptors = @[
+            nameSortDescriptor,
+            lastNameSortDescriptor,
+            firstNameSortDescriptor,
+            lastNameOrCompositeNameSortDescriptor,
+            firstNameOrCompositeNameSortDescriptor
+    ];
+
     [self.addressBook loadContactsOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
                                completion:^(NSArray *contacts, NSError *error) {
         if (!error) {
-            //weakSelf.contacts = contacts;
-
-            // ソート条件を定義
-            NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
-            NSSortDescriptor *lastNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastName" ascending:YES];
-            NSSortDescriptor *firstNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstName" ascending:YES];
-            NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
-            NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
-            NSArray *sorted = [contacts sortedArrayUsingDescriptors:@[nameSortDescriptor, lastNameSortDescriptor, firstNameSortDescriptor, lastNameOrCompositeNameSortDescriptor, firstNameOrCompositeNameSortDescriptor]];
-            weakSelf.contacts = sorted;
+            weakSelf.contacts = contacts;
 
             if (completionBlock) {
                 completionBlock(YES, nil);
