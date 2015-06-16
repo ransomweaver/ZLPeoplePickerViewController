@@ -153,8 +153,8 @@ static NSMutableArray *cachedPartitionedContacts = nil;
                                      action:@selector(showNewPersonViewController)];
     }
 
-    if (cachedPartitionedContacts != nil) {
-        self.partitionedContacts = cachedPartitionedContacts;
+    if (cachedPartitionedContacts) {
+        [self setPartitionedContacts:cachedPartitionedContacts];
         [self.tableView reloadData];
     } else {
         [self refreshControlAction:self.refreshControl];
@@ -230,18 +230,16 @@ static NSMutableArray *cachedPartitionedContacts = nil;
     //NSLog(@"didChangeNotification!");
     //[self performSelector:@selector(reloadData) withObject:nil];
 
-    __weak typeof(self) weakSelf = self;
-
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __weak __typeof(self) weakSelf = self;
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf setPartitionedContactsWithContacts:[ZLAddressBook sharedInstance].contacts];
+        if (cachedPartitionedContacts) {
+            [weakSelf setPartitionedContacts:cachedPartitionedContacts];
+        } else {
+            [weakSelf setPartitionedContactsWithContacts:[ZLAddressBook sharedInstance].contacts];
+        }
         [weakSelf.tableView reloadData];
-
-        dispatch_semaphore_signal(semaphore);
     });
-
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)reloadData {

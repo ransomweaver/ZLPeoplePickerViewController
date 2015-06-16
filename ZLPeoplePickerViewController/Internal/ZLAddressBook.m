@@ -132,8 +132,8 @@ NSString *const ZLAddressBookDidChangeNotification =
                 if (weakSelf.didChangeContactsCallback) {
                     weakSelf.didChangeContactsCallback(contacts);
                 }
-                [[NSNotificationCenter defaultCenter] postNotificationName:ZLAddressBookDidChangeNotification object:nil];
             }
+            [[NSNotificationCenter defaultCenter] postNotificationName:ZLAddressBookDidChangeNotification object:nil];
         }];
     }];
 }
