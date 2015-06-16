@@ -124,9 +124,17 @@ NSString *const ZLAddressBookDidChangeNotification =
         }
     }];
     [self.addressBook startObserveChangesWithCallback:^{
-        [[NSNotificationCenter defaultCenter]
-                postNotificationName:ZLAddressBookDidChangeNotification
-                              object:nil];
+
+        [weakSelf.addressBook loadContactsOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+                                       completion:^(NSArray *contacts, NSError *error) {
+            if (!error) {
+                weakSelf.contacts = contacts;
+                if (weakSelf.didChangeContactsCallback) {
+                    weakSelf.didChangeContactsCallback(contacts);
+                }
+                [[NSNotificationCenter defaultCenter] postNotificationName:ZLAddressBookDidChangeNotification object:nil];
+            }
+        }];
     }];
 }
 

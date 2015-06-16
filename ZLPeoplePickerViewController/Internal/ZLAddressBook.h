@@ -10,8 +10,11 @@
 
 extern NSString *const ZLAddressBookDidChangeNotification;
 
+typedef void (^ZLAddressBookDidChangeContactsCallback)(NSArray *);
+
 @interface ZLAddressBook : NSObject
 @property (strong, nonatomic, readonly) NSArray *contacts;
+@property (strong, nonatomic) ZLAddressBookDidChangeContactsCallback didChangeContactsCallback;
 
 + (instancetype)sharedInstance;
 - (void)loadContacts:(void (^)(BOOL succeeded, NSError *error))completionBlock;

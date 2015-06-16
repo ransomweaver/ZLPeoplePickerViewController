@@ -14,6 +14,7 @@
 
 #import "ZLAddressBook.h"
 #import "APContact+Sorting.h"
+#import "LRIndexedCollationWithSearch.h"
 
 @interface ZLPeoplePickerViewController () <
     ABPeoplePickerNavigationControllerDelegate, ABPersonViewControllerDelegate,
@@ -30,15 +31,14 @@
 
 @end
 
+static NSMutableArray *cachedPartitionedContacts = nil;
+
 @implementation ZLPeoplePickerViewController
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         [self setup];
-
-        // Default YES
-        self.showAddButton = YES;
     }
     return self;
 }
@@ -46,10 +46,62 @@
 - (void)setup {
     _numberOfSelectedPeople = ZLNumSelectionNone;
     self.filedMask = ZLContactFieldDefault;
+    self.showAddButton = YES;
 }
 
 + (void)initializeAddressBook {
-    [[ZLAddressBook sharedInstance] loadContacts:nil];
+    //[[ZLAddressBook sharedInstance] loadContacts:nil];
+    ZLAddressBookDidChangeContactsCallback didChangeContactsCallback = ^(NSArray *contacts) {
+
+        NSUInteger sectionCount = [[[LRIndexedCollationWithSearch currentCollation] sectionTitles] count];
+        NSMutableArray *sections = [NSMutableArray arrayWithCapacity:sectionCount];
+        for (int i = 0; i < sectionCount; i++) {
+            [sections addObject:@[].mutableCopy];
+        }
+
+        NSMutableSet *allPhoneNumbers = [NSMutableSet set];
+        for (APContact *contact in contacts) {
+
+            // only display one linked contacts
+            if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0]]) {
+                [allPhoneNumbers addObject:contact.phones[0]];
+            }
+
+            // add new contact
+            SEL selector = @selector(lastNamePhonetic);
+            if (contact.lastNamePhonetic.length == 0) {
+                selector = @selector(lastName);
+            }
+            if (contact.lastName.length == 0) {
+                selector = @selector(firstNamePhonetic);
+            }
+            if (contact.firstNamePhonetic.length == 0) {
+                selector = @selector(firstName);
+            }
+            if (contact.firstName.length == 0) {
+                selector = @selector(compositeName);
+            }
+            NSInteger index = [[LRIndexedCollationWithSearch currentCollation]
+                    sectionForObject:contact
+             collationStringSelector:selector];
+            // contact.sectionIndex = index;
+            [sections[index] addObject:contact];
+        }
+
+        for (NSInteger i = 0; i < sections.count; i++) {
+            NSArray *sorted = [sections[i] sortedArrayWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id obj1, id obj2) {
+                return [[obj1 compositeName] compare:[obj2 compositeName] options:NSNumericSearch|NSForcedOrderingSearch];
+            }];
+            sections[i] = sorted;
+        }
+
+        cachedPartitionedContacts = [sections copy];
+    };
+
+    [ZLAddressBook sharedInstance].didChangeContactsCallback = didChangeContactsCallback;
+    [[ZLAddressBook sharedInstance] loadContactsInBackground:^(BOOL succeeded, NSError *error) {
+        didChangeContactsCallback([ZLAddressBook sharedInstance].contacts);
+    }];
 }
 
 - (void)viewDidLoad {
@@ -101,7 +153,12 @@
                                      action:@selector(showNewPersonViewController)];
     }
 
-    [self refreshControlAction:self.refreshControl];
+    if (cachedPartitionedContacts != nil) {
+        self.partitionedContacts = cachedPartitionedContacts;
+        [self.tableView reloadData];
+    } else {
+        [self refreshControlAction:self.refreshControl];
+    }
 
     [[NSNotificationCenter defaultCenter]
         addObserver:self
@@ -171,7 +228,20 @@
 
 - (void)addressBookDidChangeNotification:(NSNotification *)note {
     //NSLog(@"didChangeNotification!");
-    [self performSelector:@selector(reloadData) withObject:nil];
+    //[self performSelector:@selector(reloadData) withObject:nil];
+
+    __weak typeof(self) weakSelf = self;
+
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf setPartitionedContactsWithContacts:[ZLAddressBook sharedInstance].contacts];
+        [weakSelf.tableView reloadData];
+
+        dispatch_semaphore_signal(semaphore);
+    });
+
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)reloadData {
@@ -418,10 +488,6 @@
          respondsToSelector:@selector(newPersonViewControllerDidCompleteWithNewPerson:)]) {
             [self.delegate newPersonViewControllerDidCompleteWithNewPerson:person];
          }
-
-    [[NSNotificationCenter defaultCenter]
-            postNotificationName:ZLAddressBookDidChangeNotification
-                          object:nil];
 }
 
 #pragma mark - ()
