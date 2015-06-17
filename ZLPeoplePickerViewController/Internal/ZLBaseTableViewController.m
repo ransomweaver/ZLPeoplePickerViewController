@@ -61,7 +61,7 @@
 
     // sort sections
     for (NSInteger i = 0; i < self.partitionedContacts.count; i++) {
-        NSArray *sorted = [self.partitionedContacts[i] sortedArrayWithOptions:NSSortStable usingComparator:^NSComparisonResult(id obj1, id obj2) {
+        NSArray *sorted = [self.partitionedContacts[i] sortedArrayWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id obj1, id obj2) {
             return [[obj1 compositeName] compare:[obj2 compositeName] options:NSNumericSearch|NSForcedOrderingSearch];
         }];
         self.partitionedContacts[i] = sorted;

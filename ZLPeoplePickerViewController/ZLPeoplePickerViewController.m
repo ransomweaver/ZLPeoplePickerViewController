@@ -51,57 +51,61 @@ static NSMutableArray *cachedPartitionedContacts = nil;
 
 + (void)initializeAddressBook {
     //[[ZLAddressBook sharedInstance] loadContacts:nil];
-    ZLAddressBookDidChangeContactsCallback didChangeContactsCallback = ^(NSArray *contacts) {
 
-        NSUInteger sectionCount = [[[LRIndexedCollationWithSearch currentCollation] sectionTitles] count];
-        NSMutableArray *sections = [NSMutableArray arrayWithCapacity:sectionCount];
-        for (int i = 0; i < sectionCount; i++) {
-            [sections addObject:@[].mutableCopy];
-        }
-
-        NSMutableSet *allPhoneNumbers = [NSMutableSet set];
-        for (APContact *contact in contacts) {
-
-            // only display one linked contacts
-            if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0]]) {
-                [allPhoneNumbers addObject:contact.phones[0]];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // callback
+        ZLAddressBookDidChangeContactsCallback didChangeContactsCallback = ^(NSArray *contacts) {
+            NSUInteger sectionCount = [[[LRIndexedCollationWithSearch currentCollation] sectionTitles] count];
+            NSMutableArray *sections = [NSMutableArray arrayWithCapacity:sectionCount];
+            for (int i = 0; i < sectionCount; i++) {
+                [sections addObject:@[].mutableCopy];
             }
 
-            // add new contact
-            SEL selector = @selector(lastNamePhonetic);
-            if (contact.lastNamePhonetic.length == 0) {
-                selector = @selector(lastName);
-            }
-            if (contact.lastName.length == 0) {
-                selector = @selector(firstNamePhonetic);
-            }
-            if (contact.firstNamePhonetic.length == 0) {
-                selector = @selector(firstName);
-            }
-            if (contact.firstName.length == 0) {
-                selector = @selector(compositeName);
-            }
-            NSInteger index = [[LRIndexedCollationWithSearch currentCollation]
-                    sectionForObject:contact
-             collationStringSelector:selector];
-            // contact.sectionIndex = index;
-            [sections[index] addObject:contact];
-        }
+            NSMutableSet *allPhoneNumbers = [NSMutableSet set];
+            for (APContact *contact in contacts) {
 
-        for (NSInteger i = 0; i < sections.count; i++) {
-            NSArray *sorted = [sections[i] sortedArrayWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id obj1, id obj2) {
-                return [[obj1 compositeName] compare:[obj2 compositeName] options:NSNumericSearch|NSForcedOrderingSearch];
-            }];
-            sections[i] = sorted;
-        }
+                // only display one linked contacts
+                if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0]]) {
+                    [allPhoneNumbers addObject:contact.phones[0]];
+                }
 
-        cachedPartitionedContacts = [sections copy];
-    };
+                // add new contact
+                SEL selector = @selector(lastNamePhonetic);
+                if (contact.lastNamePhonetic.length == 0) {
+                    selector = @selector(lastName);
+                }
+                if (contact.lastName.length == 0) {
+                    selector = @selector(firstNamePhonetic);
+                }
+                if (contact.firstNamePhonetic.length == 0) {
+                    selector = @selector(firstName);
+                }
+                if (contact.firstName.length == 0) {
+                    selector = @selector(compositeName);
+                }
+                NSInteger index = [[LRIndexedCollationWithSearch currentCollation]
+                        sectionForObject:contact
+                 collationStringSelector:selector];
+                // contact.sectionIndex = index;
+                [sections[index] addObject:contact];
+            }
 
-    [ZLAddressBook sharedInstance].didChangeContactsCallback = didChangeContactsCallback;
-    [[ZLAddressBook sharedInstance] loadContactsInBackground:^(BOOL succeeded, NSError *error) {
-        didChangeContactsCallback([ZLAddressBook sharedInstance].contacts);
-    }];
+            for (NSInteger i = 0; i < sections.count; i++) {
+                NSArray *sorted = [sections[i] sortedArrayWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id obj1, id obj2) {
+                    return [[obj1 compositeName] compare:[obj2 compositeName] options:NSNumericSearch|NSForcedOrderingSearch];
+                }];
+                sections[i] = sorted;
+            }
+
+            cachedPartitionedContacts = [sections copy];
+        };
+
+        [ZLAddressBook sharedInstance].didChangeContactsCallback = didChangeContactsCallback;
+        [[ZLAddressBook sharedInstance] loadContactsInBackground:^(BOOL succeeded, NSError *error) {
+            didChangeContactsCallback([ZLAddressBook sharedInstance].contacts);
+        }];
+    });
 }
 
 - (void)viewDidLoad {
