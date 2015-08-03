@@ -35,6 +35,8 @@ static NSMutableArray *cachedPartitionedContacts = nil;
 
 @implementation ZLPeoplePickerViewController
 
+@dynamic refreshControl;    // getter and setter methods implemened by the superclass
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -211,7 +213,7 @@ static NSMutableArray *cachedPartitionedContacts = nil;
         initWithBarButtonSystemItem:UIBarButtonSystemItemDone
                              target:peoplePicker
                              action:@selector(doneButtonAction:)];
-    peoplePicker.delegate = parentViewController;
+    peoplePicker.delegate = (id<ZLPeoplePickerViewControllerDelegate>)parentViewController;
     [parentViewController presentViewController:navController
                                        animated:YES
                                      completion:nil];
@@ -499,7 +501,7 @@ static NSMutableArray *cachedPartitionedContacts = nil;
             respondsToSelector:@selector(peoplePickerViewController:
                                         didReturnWithSelectedPeople:)]) {
         [self.delegate peoplePickerViewController:self
-                      didReturnWithSelectedPeople:[self.selectedPeople copy]];
+                      didReturnWithSelectedPeople:[self.selectedPeople allObjects]];
     }
 }
 
