@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <AddressBook/AddressBook.h>
-#import "APContact.h"
+#import <APAddressBook/APContact.h>
 #import "APContact+Sorting.h"
 #import "APContact+NamePhonetic.h"
 #import "ZLAddressBook.h"
