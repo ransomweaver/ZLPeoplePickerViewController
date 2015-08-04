@@ -49,8 +49,8 @@
 @end
 
 @interface ZLPeoplePickerViewController : ZLBaseTableViewController
-@property (weak, nonatomic) id<ZLPeoplePickerViewControllerDelegate> delegate;
-@property (nonatomic) ZLNumSelection numberOfSelectedPeople;
+@property (weak, nonatomic, nullable) id<ZLPeoplePickerViewControllerDelegate> delegate;
+@property (nonatomic) NSUInteger numberOfSelectedPeople;
 
 + (void)initializeAddressBook;
 //- (id)init __attribute__((unavailable("-init is not allowed, use
