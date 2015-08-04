@@ -71,19 +71,16 @@ static NSMutableArray *cachedPartitionedContacts = nil;
                 if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0]]) {
                     [allPhoneNumbers addObject:contact.phones[0]];
                 }
-
+                
                 // add new contact
-                SEL selector = @selector(lastNamePhonetic);
-                if (contact.lastNamePhonetic.length == 0) {
+                SEL selector = @selector(firstName);
+                if (contact.lastNamePhonetic.length > 0) {
+                    selector = @selector(lastNamePhonetic);
+                } else if (contact.lastName.length > 0) {
                     selector = @selector(lastName);
-                }
-                if (contact.lastName.length == 0) {
+                } else if (contact.firstNamePhonetic.length > 0) {
                     selector = @selector(firstNamePhonetic);
-                }
-                if (contact.firstNamePhonetic.length == 0) {
-                    selector = @selector(firstName);
-                }
-                if (contact.firstName.length == 0) {
+                } else if (contact.firstName.length == 0) {
                     selector = @selector(compositeName);
                 }
                 NSInteger index = [[LRIndexedCollationWithSearch currentCollation]
