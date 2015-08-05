@@ -49,16 +49,18 @@
 @end
 
 @interface ZLPeoplePickerViewController : ZLBaseTableViewController
-@property (weak, nonatomic, nullable) id<ZLPeoplePickerViewControllerDelegate> delegate;
+@property (weak, nonatomic) id<ZLPeoplePickerViewControllerDelegate> delegate;
 @property (nonatomic) NSUInteger numberOfSelectedPeople;
 
++ (void)setEmailsToMatch:(nullable NSArray*)emails;
++ (int)getMatchCount;
 + (void)initializeAddressBook;
 //- (id)init __attribute__((unavailable("-init is not allowed, use
 //-initWithType: instead")));
 - (nonnull id)initWithStyle:(UITableViewStyle)style __attribute__((unavailable(
-                        "-initWithStyle is not allowed, use -init instead")));
+                                                                               "-initWithStyle is not allowed, use -init instead")));
 + (nonnull instancetype)presentPeoplePickerViewControllerForParentViewController:
-        (nonnull UIViewController *)parentViewController;
+(nonnull UIViewController *)parentViewController;
 
 @property BOOL showAddButton;
 
