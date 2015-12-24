@@ -11,7 +11,7 @@
 #import "APContact.h"
 
 NSString *const ZLAddressBookDidChangeNotification =
-    @"ZLAddressBookDidChangeNotification";
+@"ZLAddressBookDidChangeNotification";
 
 @interface ZLAddressBook ()
 @property (strong, nonatomic) APAddressBook *addressBook;
@@ -42,13 +42,9 @@ NSString *const ZLAddressBookDidChangeNotification =
 
 - (void)loadContacts:(void (^)(BOOL succeeded, NSError *error))completionBlock {
     __weak __typeof(self) weakSelf = self;
-    self.addressBook.fieldsMask =
-        APContactFieldFirstName | APContactFieldLastName |
-        APContactFieldCompositeName | APContactFieldPhones |
-        APContactFieldThumbnail | APContactFieldRecordID |
-        APContactFieldEmails | APContactFieldAddresses;
+    self.addressBook.fieldsMask = APContactFieldName | APContactFieldThumbnail | APContactFieldAddresses;
     self.addressBook.filterBlock = ^BOOL(APContact *contact) {
-        return contact.compositeName != nil;
+        return contact.name.compositeName != nil;
     };
     // ソート条件を定義
     NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
@@ -57,17 +53,17 @@ NSString *const ZLAddressBookDidChangeNotification =
     NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
     NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
     self.addressBook.sortDescriptors = @[
-            nameSortDescriptor,
-            lastNameSortDescriptor,
-            firstNameSortDescriptor,
-            lastNameOrCompositeNameSortDescriptor,
-            firstNameOrCompositeNameSortDescriptor
-    ];
-
+                                         nameSortDescriptor,
+                                         lastNameSortDescriptor,
+                                         firstNameSortDescriptor,
+                                         lastNameOrCompositeNameSortDescriptor,
+                                         firstNameOrCompositeNameSortDescriptor
+                                         ];
+    
     [self.addressBook loadContacts:^(NSArray *contacts, NSError *error) {
         if (!error) {
             weakSelf.contacts = contacts;
-
+            
             if (completionBlock) {
                 completionBlock(YES, nil);
             }
@@ -80,20 +76,16 @@ NSString *const ZLAddressBookDidChangeNotification =
     [self.addressBook startObserveChangesWithCallback:^{
         //        [weakSelf reloadData];
         [[NSNotificationCenter defaultCenter]
-            postNotificationName:ZLAddressBookDidChangeNotification
-                          object:nil];
+         postNotificationName:ZLAddressBookDidChangeNotification
+         object:nil];
     }];
 }
 
 - (void)loadContactsInBackground:(void (^)(BOOL succeeded, NSError *error))completionBlock {
     __weak __typeof(self) weakSelf = self;
-    self.addressBook.fieldsMask =
-            APContactFieldFirstName | APContactFieldLastName |
-                    APContactFieldCompositeName | APContactFieldPhones |
-                    APContactFieldThumbnail | APContactFieldRecordID |
-                    APContactFieldEmails | APContactFieldAddresses;
+    self.addressBook.fieldsMask = APContactFieldName | APContactFieldThumbnail | APContactFieldAddresses;
     self.addressBook.filterBlock = ^BOOL(APContact *contact) {
-        return contact.compositeName != nil;
+        return contact.name.compositeName != nil;
     };
     // ソート条件を定義
     NSSortDescriptor *nameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.compositeName" ascending:YES];
@@ -102,39 +94,39 @@ NSString *const ZLAddressBookDidChangeNotification =
     NSSortDescriptor *lastNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.lastNameOrCompositeName" ascending:YES];
     NSSortDescriptor *firstNameOrCompositeNameSortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self.firstNameOrCompositeName" ascending:YES];
     self.addressBook.sortDescriptors = @[
-            nameSortDescriptor,
-            lastNameSortDescriptor,
-            firstNameSortDescriptor,
-            lastNameOrCompositeNameSortDescriptor,
-            firstNameOrCompositeNameSortDescriptor
-    ];
-
+                                         nameSortDescriptor,
+                                         lastNameSortDescriptor,
+                                         firstNameSortDescriptor,
+                                         lastNameOrCompositeNameSortDescriptor,
+                                         firstNameOrCompositeNameSortDescriptor
+                                         ];
+    
     [self.addressBook loadContactsOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
                                completion:^(NSArray *contacts, NSError *error) {
-        if (!error) {
-            weakSelf.contacts = contacts;
-
-            if (completionBlock) {
-                completionBlock(YES, nil);
-            }
-        } else {
-            if (completionBlock) {
-                completionBlock(NO, error);
-            }
-        }
-    }];
+                                   if (!error) {
+                                       weakSelf.contacts = contacts;
+                                       
+                                       if (completionBlock) {
+                                           completionBlock(YES, nil);
+                                       }
+                                   } else {
+                                       if (completionBlock) {
+                                           completionBlock(NO, error);
+                                       }
+                                   }
+                               }];
     [self.addressBook startObserveChangesWithCallback:^{
-
+        
         [weakSelf.addressBook loadContactsOnQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
                                        completion:^(NSArray *contacts, NSError *error) {
-            if (!error) {
-                weakSelf.contacts = contacts;
-                if (weakSelf.didChangeContactsCallback) {
-                    weakSelf.didChangeContactsCallback(contacts);
-                }
-            }
-            [[NSNotificationCenter defaultCenter] postNotificationName:ZLAddressBookDidChangeNotification object:nil];
-        }];
+                                           if (!error) {
+                                               weakSelf.contacts = contacts;
+                                               if (weakSelf.didChangeContactsCallback) {
+                                                   weakSelf.didChangeContactsCallback(contacts);
+                                               }
+                                           }
+                                           [[NSNotificationCenter defaultCenter] postNotificationName:ZLAddressBookDidChangeNotification object:nil];
+                                       }];
     }];
 }
 

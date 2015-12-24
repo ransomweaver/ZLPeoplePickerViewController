@@ -10,17 +10,17 @@
 
 @implementation APContact (Sorting)
 - (NSString *)firstNameOrCompositeName {
-    if (self.firstName) {
-        return self.firstName;
+    if (self.name.firstName) {
+        return self.name.firstName;
     }
-    return self.compositeName;
+    return self.name.compositeName;
 }
 
 - (NSString *)lastNameOrCompositeName {
-    if (self.lastName) {
-        return self.lastName;
+    if (self.name.lastName) {
+        return self.name.lastName;
     }
-    return self.compositeName;
+    return self.name.compositeName;
 }
 
 - (NSArray *)linkedContacts {
@@ -32,17 +32,17 @@
     for (int i = 0; i < mutableArray.count; i++) {
         NSString *phone = mutableArray[i];
         NSCharacterSet *setToRemove =
-            [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
+        [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
         NSCharacterSet *setToKeep = [setToRemove invertedSet];
-
+        
         mutableArray[i] =
-            [[phone componentsSeparatedByCharactersInSet:setToKeep]
-                componentsJoinedByString:@""];
+        [[phone componentsSeparatedByCharactersInSet:setToKeep]
+         componentsJoinedByString:@""];
     }
     //        NSLog(@"san phones: %@", mutableArray);
-
+    
     return [mutableArray copy];
-
+    
     //    static dispatch_once_t onceToken;
     //    dispatch_once(&onceToken, ^{
     //        NSMutableArray *mutableArray = [self.phones mutableCopy];
@@ -61,7 +61,7 @@
     //
     //        NSLog(@"san phones: %@", sanPhones);
     //    });
-
+    
     //    return sanPhones;
 }
 

@@ -30,27 +30,27 @@
 }
 - (void)setPartitionedContactsWithContacts:(NSArray *)contacts {
     self.partitionedContacts = [[self emptyPartitionedArray] mutableCopy];
-
+    
     NSMutableSet *allPhoneNumbers = [NSMutableSet set];
     for (APContact *contact in contacts) {
-
-        // only display one linked contacts        
+        
+        // only display one linked contacts
         if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0]]) {
             [allPhoneNumbers addObject:contact.phones[0]];
         }
-
+        
         // add new contact
         SEL selector = @selector(lastNamePhonetic);
         if (contact.lastNamePhonetic.length == 0) {
             selector = @selector(lastName);
         }
-        if (contact.lastName.length == 0) {
+        if (contact.name.lastName.length == 0) {
             selector = @selector(firstNamePhonetic);
         }
         if (contact.firstNamePhonetic.length == 0) {
             selector = @selector(firstName);
         }
-        if (contact.firstName.length == 0) {
+        if (contact.name.firstName.length == 0) {
             selector = @selector(compositeName);
         }
         NSInteger index = [[LRIndexedCollationWithSearch currentCollation] sectionForObject:contact
@@ -58,7 +58,7 @@
         // contact.sectionIndex = index;
         [self.partitionedContacts[index] addObject:contact];
     }
-
+    
     // sort sections
     for (NSInteger i = 0; i < self.partitionedContacts.count; i++) {
         NSArray *sorted = [self.partitionedContacts[i] sortedArrayWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id obj1, id obj2) {
@@ -73,19 +73,19 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     if (self.partitionedContacts.count > 0) {
         return [[[LRIndexedCollationWithSearch
-                currentCollation] sectionTitles] count];
+                  currentCollation] sectionTitles] count];
     }
     return 0;
 }
 
 - (NSString *)tableView:(UITableView *)tableView
-    titleForHeaderInSection:(NSInteger)section {
+titleForHeaderInSection:(NSInteger)section {
     if ((NSInteger)[[self.partitionedContacts
-            objectAtIndex:(NSUInteger)section] count] == 0) {
+                     objectAtIndex:(NSUInteger)section] count] == 0) {
         return @"";
     }
     return [[[LRIndexedCollationWithSearch currentCollation] sectionTitles]
-        objectAtIndex:section];
+            objectAtIndex:section];
 }
 
 - (NSArray *)sectionIndexTitlesForTableView:(UITableView *)tableView {
@@ -93,60 +93,60 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView
-    sectionForSectionIndexTitle:(NSString *)title
-                        atIndex:(NSInteger)index {
+sectionForSectionIndexTitle:(NSString *)title
+               atIndex:(NSInteger)index {
     NSInteger ret = [[LRIndexedCollationWithSearch currentCollation]
-        sectionForSectionIndexTitleAtIndex:index];
+                     sectionForSectionIndexTitleAtIndex:index];
     if (ret == NSNotFound) {
         [self.tableView
-            setContentOffset:CGPointMake(0.0,
-                                         -self.tableView.contentInset.top)];
+         setContentOffset:CGPointMake(0.0,
+                                      -self.tableView.contentInset.top)];
     }
     return ret;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView
-    numberOfRowsInSection:(NSInteger)section {
+ numberOfRowsInSection:(NSInteger)section {
     return (NSInteger)[
-        [self.partitionedContacts objectAtIndex:(NSUInteger)section] count];
+                       [self.partitionedContacts objectAtIndex:(NSUInteger)section] count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-
+    
     UITableViewCell *cell = (UITableViewCell *)
-        [tableView dequeueReusableCellWithIdentifier:kCellIdentifier];
-
+    [tableView dequeueReusableCellWithIdentifier:kCellIdentifier];
+    
     if (cell == nil) {
         cell =
-            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
-                                   reuseIdentifier:kCellIdentifier];
+        [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                               reuseIdentifier:kCellIdentifier];
         // cell.accessoryView = nil;
         cell.accessoryType = UITableViewCellAccessoryNone;
         // cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     }
-
+    
     APContact *contact = [self contactForRowAtIndexPath:indexPath];
     [self configureCell:cell forContact:contact];
-
+    
     if ([self.selectedPeople containsObject:contact.recordID]) {
         cell.accessoryType = UITableViewCellAccessoryCheckmark;
     } else {
         cell.accessoryType = UITableViewCellAccessoryNone;
     }
-
+    
     return cell;
 }
 
 #pragma mark - ()
 - (void)configureCell:(UITableViewCell *)cell forContact:(APContact *)contact {
     NSString *stringToHightlight =
-        contact.lastName ? contact.lastName : contact.compositeName;
+    contact.name.lastName ? contact.name.lastName : contact.name.compositeName;
     NSRange rangeToHightlight =
-        [contact.compositeName rangeOfString:stringToHightlight];
+    [contact.name.compositeName rangeOfString:stringToHightlight];
     NSMutableAttributedString *attributedString = [
-        [NSMutableAttributedString alloc] initWithString:contact.compositeName];
-
+                                                   [NSMutableAttributedString alloc] initWithString:contact.name.compositeName];
+    
     [attributedString beginEditing];
     [attributedString addAttribute:NSFontAttributeName
                              value:[UIFont boldSystemFontOfSize:18]
@@ -157,9 +157,9 @@
                                  range:NSMakeRange(0, attributedString.length)];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
-
+    
     [attributedString endEditing];
-
+    
     cell.textLabel.attributedText = attributedString;
 }
 
@@ -168,25 +168,25 @@
         return YES;
     }
     else {
-    return ((self.filedMask & ZLContactFieldPhones) &&
-            contact.phones.count > 0) ||
-           ((self.filedMask & ZLContactFieldEmails) &&
-            contact.emails.count > 0) ||
-           ((self.filedMask & ZLContactFieldPhoto) && contact.thumbnail) ||
-           ((self.filedMask & ZLContactFieldAddresses) &&
-            contact.addresses.count > 0);
+        return ((self.filedMask & ZLContactFieldPhones) &&
+                contact.phones.count > 0) ||
+        ((self.filedMask & ZLContactFieldEmails) &&
+         contact.emails.count > 0) ||
+        ((self.filedMask & ZLContactFieldPhoto) && contact.thumbnail) ||
+        ((self.filedMask & ZLContactFieldAddresses) &&
+         contact.addresses.count > 0);
     }
 }
 
 - (APContact *)contactForRowAtIndexPath:(NSIndexPath *)indexPath {
     return
-        [[self.partitionedContacts objectAtIndex:(NSUInteger)indexPath.section]
-            objectAtIndex:(NSUInteger)indexPath.row];
+    [[self.partitionedContacts objectAtIndex:(NSUInteger)indexPath.section]
+     objectAtIndex:(NSUInteger)indexPath.row];
 }
 
 - (NSMutableArray *)emptyPartitionedArray {
     NSUInteger sectionCount =
-        [[[LRIndexedCollationWithSearch currentCollation] sectionTitles] count];
+    [[[LRIndexedCollationWithSearch currentCollation] sectionTitles] count];
     NSMutableArray *sections = [NSMutableArray arrayWithCapacity:sectionCount];
     for (int i = 0; i < sectionCount; i++) {
         [sections addObject:[NSMutableArray array]];

@@ -4,6 +4,8 @@
 //
 
 #import "APContact+NamePhonetic.h"
+#import <AddressBook/ABAddressBook.h>
+#import <AddressBookUI/AddressBookUI.h>
 
 #include <objc/runtime.h>
 #include <objc/message.h>
@@ -28,30 +30,30 @@ typedef NSString *(*objc_msgSend_stringProperty)(id, SEL, ABPropertyID, ABRecord
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         Class class = [self class];
-
+        
         NSArray *selectors = @[
-                @[[NSValue valueWithPointer:@selector(initWithRecordRef:fieldMask:)],
-                        [NSValue valueWithPointer:@selector(initWithRecordRef_Workaround:fieldMask:)]]
-        ];
-
+                               @[[NSValue valueWithPointer:@selector(initWithRecordRef:fieldMask:)],
+                                 [NSValue valueWithPointer:@selector(initWithRecordRef_Workaround:fieldMask:)]]
+                               ];
+        
         for (NSArray *value in selectors) {
             SEL originalSelector = [value.firstObject pointerValue];
             SEL swizzledSelector = [value.lastObject pointerValue];
-
+            
             Method originalMethod = class_getInstanceMethod(class, originalSelector);
             Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
-
+            
             BOOL didAddMethod =
-                    class_addMethod(class,
+            class_addMethod(class,
                             originalSelector,
                             method_getImplementation(swizzledMethod),
                             method_getTypeEncoding(swizzledMethod));
-
+            
             if (didAddMethod) {
                 class_replaceMethod(class,
-                        swizzledSelector,
-                        method_getImplementation(originalMethod),
-                        method_getTypeEncoding(originalMethod));
+                                    swizzledSelector,
+                                    method_getImplementation(originalMethod),
+                                    method_getTypeEncoding(originalMethod));
             } else {
                 method_exchangeImplementations(originalMethod, swizzledMethod);
             }
@@ -62,11 +64,11 @@ typedef NSString *(*objc_msgSend_stringProperty)(id, SEL, ABPropertyID, ABRecord
 - (instancetype)initWithRecordRef_Workaround:(ABRecordRef)recordRef fieldMask:(APContactField)fieldMask
 {
     self = [self initWithRecordRef_Workaround:recordRef fieldMask:fieldMask];
-
+    
     objc_msgSend_stringProperty stringProperty = (objc_msgSend_stringProperty)objc_msgSend;
     self.firstNamePhonetic = stringProperty(self, @selector(stringProperty:fromRecord:), kABPersonFirstNamePhoneticProperty, recordRef);
     self.lastNamePhonetic  = stringProperty(self, @selector(stringProperty:fromRecord:), kABPersonLastNamePhoneticProperty, recordRef);
-
+    
     return self;
 }
 

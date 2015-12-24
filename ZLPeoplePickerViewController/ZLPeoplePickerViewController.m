@@ -95,11 +95,11 @@ static NSArray * emailsToMatch = nil;
                 SEL selector = @selector(firstName);
                 if (contact.lastNamePhonetic.length > 0) {
                     selector = @selector(lastNamePhonetic);
-                } else if (contact.lastName.length > 0) {
+                } else if (contact.name.lastName.length > 0) {
                     selector = @selector(lastName);
                 } else if (contact.firstNamePhonetic.length > 0) {
                     selector = @selector(firstNamePhonetic);
-                } else if (contact.firstName.length == 0) {
+                } else if (contact.name.firstName.length == 0) {
                     selector = @selector(compositeName);
                 }
                 NSInteger index = [[LRIndexedCollationWithSearch currentCollation]
