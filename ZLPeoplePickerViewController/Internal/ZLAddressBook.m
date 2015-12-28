@@ -83,7 +83,7 @@ NSString *const ZLAddressBookDidChangeNotification =
 
 - (void)loadContactsInBackground:(void (^)(BOOL succeeded, NSError *error))completionBlock {
     __weak __typeof(self) weakSelf = self;
-    self.addressBook.fieldsMask = APContactFieldName | APContactFieldThumbnail | APContactFieldAddresses;
+    self.addressBook.fieldsMask = APContactFieldAll;
     self.addressBook.filterBlock = ^BOOL(APContact *contact) {
         return contact.name.compositeName != nil;
     };

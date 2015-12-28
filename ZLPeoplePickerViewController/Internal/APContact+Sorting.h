@@ -10,10 +10,15 @@
 
 @interface APContact (Sorting)
 
-//@property (strong,nonatomic) NSArray *santrizedPhones;
-
 - (NSString *)firstNameOrCompositeName;
 - (NSString *)lastNameOrCompositeName;
-//- (NSArray *)linkedContacts;
+- (NSString *)firstName;
+- (NSString *)middleName;
+- (NSString *)lastName;
+- (NSString *)compositeName;
+- (NSString *)company;
+- (NSString *)jobTitle;
+- (NSArray *)emailsArray;
+- (NSArray *)PhonesArray;
 
 @end

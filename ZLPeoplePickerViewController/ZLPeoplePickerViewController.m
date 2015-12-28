@@ -394,7 +394,7 @@ didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
         [searchItemsPredicate addObject:finalPredicate];
         
         NSPredicate *predicate =
-        [NSPredicate predicateWithFormat:@"ANY SELF.emails CONTAINS[c] %@",
+        [NSPredicate predicateWithFormat:@"ANY SELF.emailsArray CONTAINS[c] %@",
          searchString];
         [searchItemsPredicate addObject:predicate];
         
@@ -443,7 +443,7 @@ didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
         NSNumber *targetNumber = [numFormatter
                                   numberFromString:searchString];
         if (targetNumber != nil) {   // searchString may not convert to a number
-            predicate = [NSPredicate predicateWithFormat:@"ANY SELF.phones CONTAINS[c] %@", searchString];
+            predicate = [NSPredicate predicateWithFormat:@"ANY SELF.phonesArray CONTAINS[c] %@", searchString];
             [searchItemsPredicate addObject:predicate];
         }
         // firstNamePhonetic
