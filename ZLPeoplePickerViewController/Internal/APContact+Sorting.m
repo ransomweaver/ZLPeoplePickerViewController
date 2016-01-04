@@ -69,41 +69,23 @@
 }
 
 - (NSArray *)sanitizedPhones {
-    NSMutableArray *mutableArray = [self.phones mutableCopy];
+    NSMutableArray *mutableArray = [self.phonesArray mutableCopy];
     for (int i = 0; i < mutableArray.count; i++) {
         NSString *phone = mutableArray[i];
         NSCharacterSet *setToRemove =
-        [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
+        [NSCharacterSet characterSetWithCharactersInString:@"0123456789٠١٢٣٤٥٦٧٨٩"];
         NSCharacterSet *setToKeep = [setToRemove invertedSet];
         
-        mutableArray[i] =
-        [[phone componentsSeparatedByCharactersInSet:setToKeep]
-         componentsJoinedByString:@""];
+        NSString * number = [[phone componentsSeparatedByCharactersInSet:setToKeep]
+                             componentsJoinedByString:@""];
+        if ([number hasPrefix:@"1"]) {
+            number = [number substringFromIndex:1];
+        }
+        mutableArray[i] = number;
     }
-    //        NSLog(@"san phones: %@", mutableArray);
     
     return [mutableArray copy];
     
-    //    static dispatch_once_t onceToken;
-    //    dispatch_once(&onceToken, ^{
-    //        NSMutableArray *mutableArray = [self.phones mutableCopy];
-    //        for (int i=0;i<mutableArray.count;i++) {
-    //            NSString *phone = mutableArray[i];
-    //            NSCharacterSet *setToRemove =
-    //            [NSCharacterSet
-    //            characterSetWithCharactersInString:@"0123456789"];
-    //            NSCharacterSet *setToKeep = [setToRemove invertedSet];
-    //
-    //            mutableArray[i] = [[phone
-    //            componentsSeparatedByCharactersInSet:setToKeep]
-    //            componentsJoinedByString:@""];
-    //        }
-    //        sanPhones = [mutableArray copy];
-    //
-    //        NSLog(@"san phones: %@", sanPhones);
-    //    });
-    
-    //    return sanPhones;
 }
 
 @end

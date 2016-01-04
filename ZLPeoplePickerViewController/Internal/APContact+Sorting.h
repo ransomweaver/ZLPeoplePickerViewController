@@ -19,6 +19,7 @@
 - (NSString *)company;
 - (NSString *)jobTitle;
 - (NSArray *)emailsArray;
-- (NSArray *)PhonesArray;
+- (NSArray *)phonesArray;
+- (NSArray *)sanitizedPhones;
 
 @end
